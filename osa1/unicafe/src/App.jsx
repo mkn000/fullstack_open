@@ -8,11 +8,15 @@ const Button = ({ handleClick, text }) => {
   );
 };
 
-const StatisticsLine = ({ text, value }) => {
+const StatisticsLine = ({ text, value, prec, unit }) => {
   return (
-    <div>
-      {text}: {value}
-    </div>
+    <tr>
+      <td>{text}</td>
+      <td>
+        {parseFloat(value).toFixed(isNaN(prec) ? 0 : prec)}
+        {unit}
+      </td>
+    </tr>
   );
 };
 
@@ -21,21 +25,28 @@ const Statistics = (props) => {
   if (good | neutral | bad) {
     return (
       <div>
-        <StatisticsLine text="good" value={good}></StatisticsLine>
-        <StatisticsLine text="neutral" value={neutral}></StatisticsLine>
-        <StatisticsLine text="bad" value={bad}></StatisticsLine>
-        <StatisticsLine
-          text="all"
-          value={good + neutral + bad}
-        ></StatisticsLine>
-        <StatisticsLine
-          text="average"
-          value={(good - bad) / (good + neutral + bad)}
-        ></StatisticsLine>
-        <StatisticsLine
-          text="positive"
-          value={`${(good * 100) / (good + neutral + bad)}%`}
-        ></StatisticsLine>
+        <table>
+          <tbody>
+            <StatisticsLine text="good" value={good}></StatisticsLine>
+            <StatisticsLine text="neutral" value={neutral}></StatisticsLine>
+            <StatisticsLine text="bad" value={bad}></StatisticsLine>
+            <StatisticsLine
+              text="all"
+              value={good + neutral + bad}
+            ></StatisticsLine>
+            <StatisticsLine
+              text="average"
+              value={(good - bad) / (good + neutral + bad)}
+              prec={1}
+            ></StatisticsLine>
+            <StatisticsLine
+              text="positive"
+              value={(good * 100) / (good + neutral + bad)}
+              prec={1}
+              unit="%"
+            ></StatisticsLine>
+          </tbody>
+        </table>
       </div>
     );
   } else {
