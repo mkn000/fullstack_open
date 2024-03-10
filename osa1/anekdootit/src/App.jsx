@@ -25,19 +25,27 @@ const App = () => {
     const arr = [...points];
     arr[selected] += 1;
     setPoints(arr);
+    const iMax = arr.reduce((iMax, x, i, arr) => (x > arr[iMax] ? i : iMax), 0);
+    setWinner(iMax);
   };
 
   const [selected, setSelected] = useState(0);
   const [points, setPoints] = useState(anecdotes.map((_) => 0));
+  const [winner, setWinner] = useState(0);
 
   return (
     <div>
+      <h2>Anedcdote of the day</h2>
       <div style={{ height: "5rem" }}>
         <p>{anecdotes[selected]}</p>
         <p>has {points[selected]} points</p>
       </div>
       <button onClick={vote}>vote</button>
       <button onClick={randomAnecdote}>next anecdote</button>
+
+      <h2>Anecdote with most votes</h2>
+      <p>{anecdotes[winner]}</p>
+      <p>has {points[winner]} votes</p>
     </div>
   );
 };
