@@ -46,17 +46,17 @@ const Content = ({ parts }) => {
 
 const Total = ({ parts }) => {
   console.log("Total", parts);
-  const sum = function (arr) {
-    let s = 0;
-    arr.forEach((i) => {
-      s += i.exercises;
-    });
-    return s;
-  };
+
   return (
     <div>
       <p>
-        <strong>total of {sum(parts)} exercises</strong>
+        <strong>
+          total of{" "}
+          {parts.reduce((acc, elem) => {
+            return (acc += elem.exercises);
+          }, 0)}{" "}
+          exercises
+        </strong>
       </p>
     </div>
   );
