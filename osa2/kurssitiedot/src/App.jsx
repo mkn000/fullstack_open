@@ -1,66 +1,4 @@
-const Course = ({ course }) => {
-  console.log(course);
-  return (
-    <div>
-      <Header coursename={course.name} />
-      <Content parts={course.parts} />
-    </div>
-  );
-};
-
-const Header = ({ coursename }) => {
-  console.log("header", coursename);
-  return (
-    <div>
-      <h2>{coursename}</h2>
-    </div>
-  );
-};
-
-const Part = ({ part }) => {
-  console.log("Part", part);
-  return (
-    <div>
-      <p>
-        {part.name} {part.exercises}
-      </p>
-    </div>
-  );
-};
-
-const Content = ({ parts }) => {
-  console.log(parts);
-  return (
-    <div>
-      {parts.map((part) => {
-        return (
-          <p key={part.id}>
-            <Part part={part} />
-          </p>
-        );
-      })}
-      <Total parts={parts} />
-    </div>
-  );
-};
-
-const Total = ({ parts }) => {
-  console.log("Total", parts);
-
-  return (
-    <div>
-      <p>
-        <strong>
-          total of{" "}
-          {parts.reduce((acc, elem) => {
-            return (acc += elem.exercises);
-          }, 0)}{" "}
-          exercises
-        </strong>
-      </p>
-    </div>
-  );
-};
+import Course from "./components/Course";
 
 const App = () => {
   const courses = [
@@ -111,11 +49,7 @@ const App = () => {
     <div>
       <h1>Web development curriculum</h1>
       {courses.map((course) => {
-        return (
-          <div>
-            <Course course={course} />
-          </div>
-        );
+        return <Course course={course} key={course.id} />;
       })}
     </div>
   );
