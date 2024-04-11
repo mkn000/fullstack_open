@@ -31,19 +31,21 @@ const Part = ({ part }) => {
 const Content = ({ parts }) => {
   console.log(parts);
   return (
-    <ul>
+    <div>
       {parts.map((part) => {
         return (
-          <li key={part.id}>
+          <p key={part.id}>
             <Part part={part} />
-          </li>
+          </p>
         );
       })}
-    </ul>
+      <Total parts={parts} />
+    </div>
   );
 };
 
-const Total = (props) => {
+const Total = ({ parts }) => {
+  console.log("Total", parts);
   const sum = function (arr) {
     let s = 0;
     arr.forEach((i) => {
@@ -53,7 +55,9 @@ const Total = (props) => {
   };
   return (
     <div>
-      <p>Number of exercises {sum(props.data)}</p>
+      <p>
+        <strong>total of {sum(parts)} exercises</strong>
+      </p>
     </div>
   );
 };
