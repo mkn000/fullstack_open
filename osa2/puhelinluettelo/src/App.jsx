@@ -67,12 +67,32 @@ const App = () => {
 
   const addName = (event) => {
     event.preventDefault();
-    if (persons.some((person) => person.name === newName)) {
-      alert(`${newName} is already added to phonebook`);
-      return;
-    }
-    const newPerson = { name: newName, number: newNumber };
+    const oldPerson = persons.find((person) => person.name === newName);
+    if (oldPerson) {
+      if (
+        window.confirm(
+          `${newName} is already added to phonebook, update number?`,
+        )
+      ) {
+        numberService
+          .update(oldPerson.id, { ...oldPerson, number: newNumber })
+          .then((resp) => {
+            setPersons(
+              persons.map((person) =>
+                person.id !== oldPerson.id ? person : resp,
+              ),
+            );
 
+            setNewName("");
+            setNewNumber("");
+          });
+        return;
+      } else {
+        return;
+      }
+    }
+
+    const newPerson = { name: newName, number: newNumber };
     numberService.create(newPerson).then((data) => {
       setPersons(persons.concat(data));
       setNewName("");
