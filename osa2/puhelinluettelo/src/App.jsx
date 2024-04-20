@@ -37,7 +37,7 @@ const Numbers = ({ persons }) => {
     <div>
       {persons.map((person) => {
         return (
-          <p key={person.name}>
+          <p key={person.id}>
             {person.name} {person.number}
           </p>
         );
@@ -67,6 +67,11 @@ const App = () => {
     }
     const newPerson = { name: newName, number: newNumber };
     setPersons(persons.concat(newPerson));
+
+    axios
+      .post("http://localhost:3001/persons", newPerson)
+      .then((resp) => console.log(resp));
+
     setNewName("");
     setNewNumber("");
   };
