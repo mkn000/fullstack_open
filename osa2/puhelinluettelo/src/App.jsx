@@ -32,13 +32,19 @@ const AddNewForm = ({
   );
 };
 
-const Numbers = ({ persons }) => {
+const Numbers = ({ persons, handler }) => {
   return (
     <div>
       {persons.map((person) => {
         return (
           <p key={person.id}>
             {person.name} {person.number}
+            <span
+              style={{ color: "red", marginLeft: "5px", cursor: "pointer" }}
+              onClick={() => handler(person.id)}
+            >
+              X
+            </span>
           </p>
         );
       })}
@@ -86,6 +92,15 @@ const App = () => {
     setFiltering(event.target.value);
   };
 
+  const handleRemove = (id) => {
+    const person = persons.find((person) => person.id == id);
+    if (window.confirm(`Remove ${person.name}?`)) {
+      numberService.remove(id).then((resp) => {
+        setPersons(persons.filter((person) => person.id !== id));
+      });
+    }
+  };
+
   const showNames =
     filterBy.length > 0
       ? persons.filter((person) =>
@@ -108,7 +123,7 @@ const App = () => {
         handleNumber={handleNumber}
       />
       <h3>Numbers</h3>
-      <Numbers persons={showNames} />
+      <Numbers persons={showNames} handler={handleRemove} />
     </div>
   );
 };
