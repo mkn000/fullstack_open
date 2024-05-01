@@ -52,12 +52,22 @@ const Numbers = ({ persons, handler }) => {
   );
 };
 
+const Notification = ({ notification }) => {
+  const { msg, style } = notification;
+  if (msg === "") {
+    return null;
+  }
+
+  return <div className={style}>{msg}</div>;
+};
+
 const App = () => {
   const [persons, setPersons] = useState([]);
 
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [filterBy, setFiltering] = useState("");
+  const [notification, setNotification] = useState({ msg: "", style: "" });
 
   useEffect(() => {
     numberService.getAll().then((data) => {
@@ -76,15 +86,30 @@ const App = () => {
       ) {
         numberService
           .update(oldPerson.id, { ...oldPerson, number: newNumber })
-          .then((resp) => {
+          .then((data) => {
             setPersons(
               persons.map((person) =>
-                person.id !== oldPerson.id ? person : resp,
+                person.id !== oldPerson.id ? person : data,
               ),
             );
 
             setNewName("");
             setNewNumber("");
+            setNotification({ msg: `Updated ${data.name}`, style: "success" });
+            setTimeout(() => {
+              setNotification({ msg: "", style: "" });
+            }, 5000);
+          })
+          .catch((err) => {
+            if (err.response.status === 404) {
+              setNotification({
+                msg: `Information of ${oldPerson.name} has been already removed from server`,
+                style: "error",
+              });
+              setTimeout(() => {
+                setNotification({ msg: "", style: "" });
+              }, 5000);
+            }
           });
         return;
       } else {
@@ -93,11 +118,20 @@ const App = () => {
     }
 
     const newPerson = { name: newName, number: newNumber };
-    numberService.create(newPerson).then((data) => {
-      setPersons(persons.concat(data));
-      setNewName("");
-      setNewNumber("");
-    });
+    numberService
+      .create(newPerson)
+      .then((data) => {
+        setPersons(persons.concat(data));
+        setNewName("");
+        setNewNumber("");
+        setNotification({ msg: `Added ${data.name}`, style: "success" });
+        setTimeout(() => {
+          setNotification({ msg: "", style: "" });
+        }, 5000);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 
   const handleName = (event) => {
@@ -115,9 +149,18 @@ const App = () => {
   const handleRemove = (id) => {
     const person = persons.find((person) => person.id == id);
     if (window.confirm(`Remove ${person.name}?`)) {
-      numberService.remove(id).then((resp) => {
-        setPersons(persons.filter((person) => person.id !== id));
-      });
+      numberService
+        .remove(id)
+        .then((data) => {
+          setPersons(persons.filter((person) => person.id !== id));
+          setNotification({ msg: `Removed ${data.name}`, style: "success" });
+          setTimeout(() => {
+            setNotification({ msg: "", style: "" });
+          }, 5000);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     }
   };
 
@@ -131,7 +174,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
-
+      <Notification notification={notification} />
       <FilterForm filterBy={filterBy} handleFilter={handleFilter} />
 
       <h3>Add new</h3>
