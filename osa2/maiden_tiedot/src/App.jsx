@@ -18,7 +18,7 @@ const Country = ({ country }) => {
   );
 };
 
-const Countries = ({ countries, filterBy }) => {
+const Countries = ({ countries, filterBy, setFiltering }) => {
   if (filterBy.length === 0) {
     return null;
   }
@@ -37,7 +37,14 @@ const Countries = ({ countries, filterBy }) => {
     return (
       <ul>
         {filtered.map((country) => {
-          return <li key={country.cca2}>{country.name.common}</li>;
+          return (
+            <li key={country.cca2}>
+              {country.name.common}
+              <button onClick={() => setFiltering(country.name.common)}>
+                show
+              </button>
+            </li>
+          );
         })}
       </ul>
     );
@@ -67,7 +74,11 @@ function App() {
     <div>
       <FilterForm filterBy={filterBy} handler={handleFilter} />
 
-      <Countries countries={countries} filterBy={filterBy} />
+      <Countries
+        countries={countries}
+        filterBy={filterBy}
+        setFiltering={setFiltering}
+      />
     </div>
   );
 }
