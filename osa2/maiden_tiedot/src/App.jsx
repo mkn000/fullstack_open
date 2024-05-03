@@ -18,29 +18,23 @@ const Country = ({ country }) => {
   );
 };
 
-const Countries = ({ countries, filterBy, setFiltering }) => {
+const Countries = ({ countries, filterBy, setFilteredCountries }) => {
   if (filterBy.length === 0) {
     return null;
   }
 
-  const filtered = countries.filter((country) => {
-    return country.name.common.toLowerCase().startsWith(filterBy.toLowerCase());
-  });
-
-  console.log(filtered);
-
-  if (filtered.length > 10) {
+  if (countries.length > 10) {
     return <div>Too many matches, specify another filter</div>;
-  } else if (filtered.length === 1) {
-    return <Country country={filtered[0]} />;
+  } else if (countries.length === 1) {
+    return <Country country={countries[0]} />;
   } else {
     return (
       <ul>
-        {filtered.map((country) => {
+        {countries.map((country) => {
           return (
             <li key={country.cca2}>
               {country.name.common}
-              <button onClick={() => setFiltering(country.name.common)}>
+              <button onClick={() => setFilteredCountries([country])}>
                 show
               </button>
             </li>
@@ -59,25 +53,37 @@ const FilterForm = ({ filterBy, handler }) => {
   );
 };
 function App() {
-  const [filterBy, setFiltering] = useState("");
+  const [filterByText, setFilteringText] = useState("");
   const [countries, setCountries] = useState([]);
+  const [filteredCountries, setFilteredCountries] = useState([]);
 
   useEffect(() => {
     countryService.getAll().then((data) => {
       setCountries(data);
     });
   }, []);
+
+  useEffect(() => {
+    setFilteredCountries(
+      countries.filter((country) => {
+        return country.name.common
+          .toLowerCase()
+          .includes(filterByText.toLowerCase());
+      }),
+    );
+  }, [filterByText]);
+
   const handleFilter = (event) => {
-    setFiltering(event.target.value);
+    setFilteringText(event.target.value);
   };
   return (
     <div>
-      <FilterForm filterBy={filterBy} handler={handleFilter} />
+      <FilterForm filterBy={filterByText} handler={handleFilter} />
 
       <Countries
-        countries={countries}
-        filterBy={filterBy}
-        setFiltering={setFiltering}
+        countries={filteredCountries}
+        filterBy={filterByText}
+        setFilteredCountries={setFilteredCountries}
       />
     </div>
   );
