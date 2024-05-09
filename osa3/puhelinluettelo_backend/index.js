@@ -3,7 +3,7 @@ const app = express();
 
 const PORT = 3001;
 
-persons = [
+const persons = [
   {
     name: "Arto Hellas",
     number: "040-123456",
@@ -28,6 +28,16 @@ persons = [
 
 app.get("/api/persons", (req, resp) => {
   resp.json(persons);
+});
+
+app.get("/api/persons/:id", (req, resp) => {
+  const id = req.params.id;
+  const person = persons.find((person) => person.id.toString() === id);
+  if (person) {
+    resp.json(person);
+  } else {
+    resp.status(404).end();
+  }
 });
 
 app.get("/info", (req, resp) => {
