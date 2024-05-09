@@ -3,7 +3,7 @@ const app = express();
 
 const PORT = 3001;
 
-const persons = [
+let persons = [
   {
     name: "Arto Hellas",
     number: "040-123456",
@@ -44,6 +44,13 @@ app.get("/info", (req, resp) => {
   resp.send(
     `<p>Phonebook has info for ${persons.length} people</p><br/>${Date()}`,
   );
+});
+
+app.delete("/api/persons/:id", (req, resp) => {
+  const id = req.params.id;
+  persons = persons.filter((person) => person.id.toString() !== id);
+
+  resp.status(204).end();
 });
 
 app.listen(PORT, () => {
