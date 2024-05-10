@@ -26,6 +26,8 @@ let persons = [
   },
 ];
 
+app.use(express.json());
+
 app.get("/api/persons", (req, resp) => {
   resp.json(persons);
 });
@@ -44,6 +46,15 @@ app.get("/info", (req, resp) => {
   resp.send(
     `<p>Phonebook has info for ${persons.length} people</p><br/>${Date()}`,
   );
+});
+
+app.post("/api/persons", (req, resp) => {
+  let person = req.body;
+  const id = Math.floor(Math.random() * 1000);
+  console.log(person);
+  person = { ...person, id: id };
+  persons.push(person);
+  resp.json(person);
 });
 
 app.delete("/api/persons/:id", (req, resp) => {
