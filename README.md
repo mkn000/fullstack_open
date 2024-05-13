@@ -6,4 +6,4 @@ https://fullstackopen.com
 
 ## Puhelinluettelo
 
-[Backend](https://fullstack-open-vub4.onrender.com)
+[Backend](https://fullstack-open-vub4.onrender.com/api/persons)
