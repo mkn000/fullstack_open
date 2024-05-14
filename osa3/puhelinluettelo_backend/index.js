@@ -1,10 +1,12 @@
+require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
 const cors = require("cors");
+const Contact = require("./models/contact");
 
 const app = express();
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 
 let persons = [
   {
@@ -40,23 +42,23 @@ app.use(
 );
 
 app.get("/api/persons", (req, resp) => {
-  resp.json(persons);
+  Contact.find({}).then((persons) => {
+    resp.json(persons);
+  });
 });
 
 app.get("/api/persons/:id", (req, resp) => {
-  const id = req.params.id;
-  const person = persons.find((person) => person.id.toString() === id);
-  if (person) {
+  Contact.findById(req.params.id).then((person) => {
     resp.json(person);
-  } else {
-    resp.status(404).end();
-  }
+  });
 });
 
 app.get("/info", (req, resp) => {
-  resp.send(
-    `<p>Phonebook has info for ${persons.length} people</p><br/>${Date()}`,
-  );
+  Contact.find({}).then((persons) => {
+    resp.send(
+      `<p>Phonebook has info for ${persons.length} people</p><br/>${Date()}`,
+    );
+  });
 });
 
 app.post("/api/persons", (req, resp) => {
@@ -66,13 +68,12 @@ app.post("/api/persons", (req, resp) => {
 
   if (!person.number) return resp.status(400).json({ error: "Number missing" });
 
-  const exists = persons.find((elem) => elem.name === person.name);
-  if (exists) return resp.status(400).json({ error: "Name must be unique" });
+  const contact = new Contact(person);
 
-  const id = Math.floor(Math.random() * 1000);
-  person = { ...person, id: id };
-  persons.push(person);
-  resp.json(person);
+  contact.save().then((res) => {
+    console.log(`added ${res.name} number ${res.number} to phonebook`);
+    resp.json(res);
+  });
 });
 
 app.delete("/api/persons/:id", (req, resp) => {
