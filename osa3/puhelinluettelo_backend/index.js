@@ -62,6 +62,16 @@ app.post("/api/persons", (req, resp, next) => {
     .catch((error) => next(error));
 });
 
+app.put("/api/persons/:id", (req, resp, next) => {
+  const id = req.params.id;
+  const person = req.body;
+  Contact.findByIdAndUpdate(id, person, { new: true })
+    .then((updated) => {
+      resp.json(updated);
+    })
+    .catch((error) => next(error));
+});
+
 app.delete("/api/persons/:id", (req, resp, next) => {
   const id = req.params.id;
 
