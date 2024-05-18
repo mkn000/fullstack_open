@@ -8,29 +8,6 @@ const app = express();
 
 const PORT = process.env.PORT;
 
-let persons = [
-  {
-    name: "Arto Hellas",
-    number: "040-123456",
-    id: 1,
-  },
-  {
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-    id: 2,
-  },
-  {
-    name: "Dan Abramov",
-    number: "12-43-234345",
-    id: 3,
-  },
-  {
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-    id: 4,
-  },
-];
-
 morgan.token("body", function (req, res) {
   if (req.method === "POST") return JSON.stringify(req.body);
 });
@@ -78,9 +55,10 @@ app.post("/api/persons", (req, resp) => {
 
 app.delete("/api/persons/:id", (req, resp) => {
   const id = req.params.id;
-  persons = persons.filter((person) => person.id.toString() !== id);
 
-  resp.status(204).end();
+  Contact.findByIdAndDelete(id).then((_) => {
+    resp.status(204).end();
+  });
 });
 
 app.listen(PORT, () => {
