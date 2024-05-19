@@ -130,7 +130,14 @@ const App = () => {
         }, 5000);
       })
       .catch((err) => {
-        console.log(err);
+        console.log(err.response.data);
+        setNotification({
+          msg: `${err.response.data.error}`,
+          style: "error",
+        });
+        setTimeout(() => {
+          setNotification({ msg: "", style: "" });
+        }, 5000);
       });
   };
 
