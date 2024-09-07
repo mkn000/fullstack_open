@@ -1,10 +1,10 @@
-const { test, describe, after, beforeEach } = require("node:test");
+const { test, describe, after, before, beforeEach } = require("node:test");
 const assert = require("node:assert");
 const mongoose = require("mongoose");
 const supertest = require("supertest");
 const app = require("../app");
 const Blog = require("../models/blog");
-
+const User = require("../models/user");
 const api = supertest(app);
 
 const blogs = [
@@ -72,12 +72,37 @@ const blogWithNoUrl = {
   __v: 0,
 };
 
-beforeEach(async () => {
+const newUser = {
+  username: "mluukkai",
+  name: "Matti Luukkainen",
+  password: "salainen",
+};
+
+before(async () => {
+  await User.deleteMany({});
+
+  await api
+    .post("/api/users")
+    .send(newUser)
+    .expect(201)
+    .expect("Content-Type", /application\/json/);
+
+  const [user, ...rest] = await User.find({ username: "mluukkai" });
+
+  const validBlogs = blogs.map((element) => {
+    return { ...element, user: user._id };
+  });
+
   await Blog.deleteMany({});
-  await Blog.insertMany(blogs);
+  await Blog.insertMany(validBlogs);
+
+  for (const blog of validBlogs) {
+    user.blogs = user.blogs.concat(blog._id);
+  }
+  await user.save();
 });
 
-describe("api GET", () => {
+describe("api/blogs GET", () => {
   test("blogs are returned as json", async () => {
     const response = await api
       .get("/api/blogs")
@@ -96,10 +121,27 @@ describe("api GET", () => {
   });
 });
 
-describe("api POST", () => {
+describe("api/blogs POST", () => {
+  let user;
+  let token;
+
+  before(async () => {
+    [user, ...rest] = await User.find({ username: "mluukkai" });
+    const loginResponse = await api
+      .post("/api/login")
+      .send(newUser)
+      .expect(200)
+      .expect("Content-Type", /application\/json/);
+
+    token = loginResponse.body.token;
+  });
+
   test("adding valid blog", async () => {
+    newBlog.user = user._id.toString();
+
     await api
       .post("/api/blogs")
+      .set("Authorization", `Bearer ${token}`)
       .send(newBlog)
       .expect(201)
       .expect("Content-Type", /application\/json/);
@@ -112,8 +154,10 @@ describe("api POST", () => {
   });
 
   test("likes has default value of 0", async () => {
+    blogWithNoLikes.user = user._id.toString();
     await api
       .post("/api/blogs")
+      .set("Authorization", `Bearer ${token}`)
       .send(blogWithNoLikes)
       .expect(201)
       .expect("Content-Type", /application\/json/);
@@ -127,36 +171,116 @@ describe("api POST", () => {
   });
 
   test("blog with no title returns 400", async () => {
-    await api.post("/api/blogs").send(blogWithNoTitle).expect(400);
+    blogWithNoTitle.user = user._id.toString();
+    await api
+      .post("/api/blogs")
+      .set("Authorization", `Bearer ${token}`)
+      .send(blogWithNoTitle)
+      .expect(400);
   });
 
   test("blog with no url returns 400", async () => {
-    await api.post("/api/blogs").send(blogWithNoUrl).expect(400);
+    blogWithNoUrl.user = user._id.toString();
+    await api
+      .post("/api/blogs")
+      .set("Authorization", `Bearer ${token}`)
+      .send(blogWithNoUrl)
+      .expect(400);
+  });
+
+  test("fails to add when token missing", async () => {
+    await api
+      .post("/api/blogs")
+      .send({ ...newBlog, _id: newBlog._id + "asdas" }) //to make sure id is different
+      .expect(401)
+      .expect("Content-Type", /application\/json/);
+  });
+
+  test("fails to add when token is not valid", async () => {
+    const resp = await api
+      .post("/api/blogs")
+      .set("Authorization", `Bearer justsometext`)
+      .send({ ...newBlog, _id: newBlog._id + "asdas" }) //to make sure id is different
+      .expect(401)
+      .expect("Content-Type", /application\/json/);
   });
 });
 
-describe("api DELETE", () => {
+describe("api/blogs DELETE", () => {
+  let user;
+  let token;
+
+  before(async () => {
+    [user, ...rest] = await User.find({ username: "mluukkai" });
+    const loginresponse = await api
+      .post("/api/login")
+      .send(newUser)
+      .expect(200)
+      .expect("content-type", /application\/json/);
+
+    token = loginresponse.body.token;
+  });
+  test("fails when token mismatch", async () => {
+    const loginResponse = await api
+      .post("/api/login")
+      .send({ username: "root", password: "sekret" })
+      .expect(200)
+      .expect("Content-Type", /application\/json/);
+
+    const wrongToken = loginResponse.body.token;
+    await api
+      .delete(`/api/blogs/${blogs[0]._id}`)
+      .set("Authorization", `Bearer ${wrongToken}`)
+      .expect(403);
+  });
   test("blog can be deleted by id", async () => {
-    await api.delete(`/api/blogs/${blogs[0]._id}`).expect(204);
+    const beforeDel = await api
+      .get("/api/blogs")
+      .expect(200)
+      .expect("Content-Type", /application\/json/);
+
+    await api
+      .delete(`/api/blogs/${blogs[0]._id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .expect(204);
 
     const response = await api
       .get("/api/blogs")
       .expect(200)
       .expect("Content-Type", /application\/json/);
 
-    assert.strictEqual(response.body.length, blogs.length - 1);
+    assert.strictEqual(response.body.length, beforeDel.body.length - 1);
   });
 });
 
-describe("api PUT", () => {
-  test("blog can be updated", async () => {
-    const updated = { ...blogs[0], likes: 140 };
-    const response = await api
-      .put(`/api/blogs/${blogs[0]._id}`)
-      .send(updated)
-      .expect(200);
+describe("api/blogs PUT", () => {
+  let user;
+  let token;
 
-    assert.strictEqual(response.body.likes, 140);
+  before(async () => {
+    [user, ...rest] = await User.find({ username: "mluukkai" });
+    const loginResponse = await api
+      .post("/api/login")
+      .send(newUser)
+      .expect(200)
+      .expect("Content-Type", /application\/json/);
+
+    token = loginResponse.body.token;
+  });
+  test("blog can be updated", async () => {
+    const beforeUp = await api
+      .get(`/api/blogs/${blogWithNoLikes._id}`)
+      .expect(200)
+      .expect("Content-Type", /application\/json/);
+
+    const response = await api
+      .put(`/api/blogs/${blogWithNoLikes._id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ ...beforeUp.body, likes: 200 })
+      .expect(200)
+      .expect("Content-Type", /application\/json/);
+
+    assert.notStrictEqual(response.body.likes, beforeUp.body.likes);
   });
 });
 
