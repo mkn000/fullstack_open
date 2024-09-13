@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Blog from "./components/Blog";
+import Togglable from "./components/Togglable";
+import BlogForm from "./components/BlogForm";
 import blogService from "./services/blogs";
 import loginService from "./services/login";
 
@@ -23,6 +25,8 @@ const App = () => {
   const [author, setAuthor] = useState("");
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
+
+  const blogFormRef = useRef();
 
   useEffect(() => {
     const loggedUserJSON = window.localStorage.getItem("currentUser");
@@ -59,22 +63,20 @@ const App = () => {
     setUser(null);
     location.reload();
   };
-  const createBlog = async (event) => {
-    event.preventDefault();
+  const createBlog = async (blogObject) => {
     console.log("creating new blog");
     try {
-      const blog = await blogService.create({ title, author, url });
+      const blog = await blogService.create(blogObject);
+
+      setBlogs(blogs.concat(blog));
+      blogFormRef.current.toggleVisibility();
       setNotification({
-        msg: `a new blog ${title} by ${author} added`,
+        msg: `a new blog ${blog.title} by ${blog.author} added`,
         style: "success",
       });
       setTimeout(() => {
         setNotification(null);
       }, 5000);
-      setUrl("");
-      setBlogs([...blogs, blog]);
-      setAuthor("");
-      setTitle("");
     } catch (exception) {}
   };
 
@@ -113,41 +115,6 @@ const App = () => {
       ))}
     </div>
   );
-  const blogForm = () => (
-    <div>
-      <h2>create new blog</h2>
-      <form onSubmit={createBlog}>
-        <div>
-          title
-          <input
-            type="text"
-            value={title}
-            name="Title"
-            onChange={({ target }) => setTitle(target.value)}
-          />
-        </div>
-        <div>
-          author
-          <input
-            type="text"
-            value={author}
-            name="Author"
-            onChange={({ target }) => setAuthor(target.value)}
-          />
-        </div>
-        <div>
-          url
-          <input
-            type="text"
-            value={url}
-            name="Url"
-            onChange={({ target }) => setUrl(target.value)}
-          />
-        </div>{" "}
-        <button type="submit">create</button>
-      </form>
-    </div>
-  );
   return (
     <div>
       {!user && loginForm()}
@@ -159,7 +126,9 @@ const App = () => {
             {user.name} logged in{" "}
             <button onClick={handleLogout}>log out</button>
           </p>
-          {blogForm()}
+          <Togglable buttonLabel="new blog" ref={blogFormRef}>
+            <BlogForm createBlog={createBlog} />
+          </Togglable>
           {blogsRender()}
         </div>
       )}
