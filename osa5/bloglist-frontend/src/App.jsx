@@ -22,10 +22,6 @@ const App = () => {
   const [notification, setNotification] = useState(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [author, setAuthor] = useState("");
-  const [title, setTitle] = useState("");
-  const [url, setUrl] = useState("");
-
   const blogFormRef = useRef();
 
   useEffect(() => {
@@ -80,6 +76,20 @@ const App = () => {
     } catch (exception) {}
   };
 
+  const updateBlog = async (blogObject) => {
+    try {
+      const updatedBlog = await blogService.update(blogObject);
+      setBlogs(
+        blogs.map((blog) => (blog.id !== blogObject.id ? blog : updatedBlog)),
+      );
+    } catch (error) {
+      setNotification({ msg: "update operation failed", style: "error" });
+      setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+    }
+  };
+
   const loginForm = () => (
     <div>
       {" "}
@@ -110,9 +120,11 @@ const App = () => {
   const blogsRender = () => (
     <div>
       <h2>blogs</h2>
-      {blogs.map((blog) => (
-        <Blog key={blog.id} blog={blog} />
-      ))}
+      {blogs
+        .sort((a, b) => b.likes - a.likes)
+        .map((blog) => (
+          <Blog key={blog.id} blog={blog} updateBlog={updateBlog} />
+        ))}
     </div>
   );
   return (
