@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState } from 'react';
 
 const BlogForm = ({ createBlog }) => {
-  const [newBlog, setBlog] = useState({ title: "", author: "", url: "" });
+  const [newBlog, setBlog] = useState({ title: '', author: '', url: '' });
 
   const addBlog = (event) => {
     event.preventDefault();
     createBlog(newBlog);
-    setBlog({ title: "", author: "", url: "" });
+    setBlog({ title: '', author: '', url: '' });
   };
   return (
     <div>
@@ -44,7 +44,7 @@ const BlogForm = ({ createBlog }) => {
               setBlog({ ...newBlog, url: target.value })
             }
           />
-        </div>{" "}
+        </div>{' '}
         <button type="submit">create</button>
       </form>
     </div>

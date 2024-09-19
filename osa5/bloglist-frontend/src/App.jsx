@@ -1,14 +1,14 @@
-import { useState, useEffect, useRef } from "react";
-import Blog from "./components/Blog";
-import Togglable from "./components/Togglable";
-import BlogForm from "./components/BlogForm";
-import blogService from "./services/blogs";
-import loginService from "./services/login";
+import { useState, useEffect, useRef } from 'react';
+import Blog from './components/Blog';
+import Togglable from './components/Togglable';
+import BlogForm from './components/BlogForm';
+import blogService from './services/blogs';
+import loginService from './services/login';
 
 const Notification = ({ notification }) => {
   if (notification) {
     const { msg, style } = notification;
-    if (msg === "") {
+    if (msg === '') {
       return null;
     }
 
@@ -20,12 +20,12 @@ const App = () => {
   const [blogs, setBlogs] = useState([]);
   const [user, setUser] = useState(null);
   const [notification, setNotification] = useState(null);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const blogFormRef = useRef();
 
   useEffect(() => {
-    const loggedUserJSON = window.localStorage.getItem("currentUser");
+    const loggedUserJSON = window.localStorage.getItem('currentUser');
     if (loggedUserJSON) {
       const user = JSON.parse(loggedUserJSON);
       setUser(user);
@@ -38,29 +38,29 @@ const App = () => {
 
   const handleLogin = async (event) => {
     event.preventDefault();
-    console.log("logging in with", username, password);
+    console.log('logging in with', username, password);
 
     try {
       const user = await loginService.login({ username, password });
-      window.localStorage.setItem("currentUser", JSON.stringify(user));
+      window.localStorage.setItem('currentUser', JSON.stringify(user));
       setUser(user);
       blogService.setToken(user.token);
-      setUsername("");
-      setPassword("");
+      setUsername('');
+      setPassword('');
     } catch (exception) {
-      setNotification({ msg: "wrong credentials", style: "error" });
+      setNotification({ msg: 'wrong credentials', style: 'error' });
       setTimeout(() => {
         setNotification(null);
       }, 5000);
     }
   };
   const handleLogout = () => {
-    window.localStorage.removeItem("currentUser");
+    window.localStorage.removeItem('currentUser');
     setUser(null);
     location.reload();
   };
   const createBlog = async (blogObject) => {
-    console.log("creating new blog");
+    console.log('creating new blog');
     try {
       const blog = await blogService.create(blogObject);
 
@@ -68,12 +68,20 @@ const App = () => {
       blogFormRef.current.toggleVisibility();
       setNotification({
         msg: `a new blog ${blog.title} by ${blog.author} added`,
-        style: "success",
+        style: 'success',
       });
       setTimeout(() => {
         setNotification(null);
       }, 5000);
-    } catch (exception) {}
+    } catch (error) {
+      setNotification({
+        msg: `${error}`,
+        style: 'error',
+      });
+      setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+    }
   };
 
   const updateBlog = async (blogObject) => {
@@ -83,7 +91,29 @@ const App = () => {
         blogs.map((blog) => (blog.id !== blogObject.id ? blog : updatedBlog)),
       );
     } catch (error) {
-      setNotification({ msg: "update operation failed", style: "error" });
+      setNotification({ msg: 'update operation failed', style: 'error' });
+      setTimeout(() => {
+        setNotification(null);
+      }, 5000);
+    }
+  };
+
+  const removeBlog = async (blogObject) => {
+    try {
+      const remove = window.confirm(
+        `Remove ${blogObject.title} by ${blogObject.author}?`,
+      );
+      if (remove) {
+        await blogService.remove(blogObject.id);
+
+        setBlogs(blogs.filter((blog) => blog.id !== blogObject.id));
+        setNotification({ msg: 'blog removed successfully', style: 'success' });
+        setTimeout(() => {
+          setNotification(null);
+        }, 5000);
+      }
+    } catch (error) {
+      setNotification({ msg: 'could not remove blog', style: 'error' });
       setTimeout(() => {
         setNotification(null);
       }, 5000);
@@ -92,7 +122,7 @@ const App = () => {
 
   const loginForm = () => (
     <div>
-      {" "}
+      {' '}
       <h2>Log in to application</h2>
       <form onSubmit={handleLogin}>
         <div>
@@ -123,7 +153,13 @@ const App = () => {
       {blogs
         .sort((a, b) => b.likes - a.likes)
         .map((blog) => (
-          <Blog key={blog.id} blog={blog} updateBlog={updateBlog} />
+          <Blog
+            key={blog.id}
+            blog={blog}
+            updateBlog={updateBlog}
+            removeBlog={removeBlog}
+            isOwner={blog.user.username === user.username}
+          />
         ))}
     </div>
   );
@@ -135,7 +171,7 @@ const App = () => {
       {user && (
         <div>
           <p>
-            {user.name} logged in{" "}
+            {user.name} logged in{' '}
             <button onClick={handleLogout}>log out</button>
           </p>
           <Togglable buttonLabel="new blog" ref={blogFormRef}>
