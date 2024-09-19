@@ -27,6 +27,7 @@ blogsRouter.post("/", userExtractor, async (request, response) => {
     response.status(403).json({ error: "unauthorized access" });
   } else {
     const result = await blog.save();
+    await Blog.populate(result, { path: "user" });
 
     user.blogs = user.blogs.concat(result._id);
     user.save();
@@ -54,7 +55,7 @@ blogsRouter.put("/:id", userExtractor, async (request, response) => {
     request.params.id,
     request.body,
     { new: true },
-  );
+  ).populate("user");
   response.json(updated);
 });
 
