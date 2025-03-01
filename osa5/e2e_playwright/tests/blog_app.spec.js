@@ -1,4 +1,5 @@
 const { test, expect, beforeEach, describe } = require("@playwright/test");
+const { before } = require("node:test");
 
 describe("Blog app", () => {
   beforeEach(async ({ page, request }) => {
@@ -64,6 +65,23 @@ describe("Blog app", () => {
           "div:has-text('test blogtitle test blogauthor'):below(h2:has-text('blogs'))",
         ),
       ).toBeVisible();
+    });
+
+    describe("and when blog exists", () => {
+      beforeEach(async ({ page }) => {
+        await page.getByRole("button", { name: "new blog" }).click();
+        const boxes = await page.getByRole("textbox").all();
+        await boxes[0].fill("test blogtitle");
+        await boxes[1].fill("test blogauthor");
+        await boxes[2].fill("test blogurl");
+        await page.getByRole("button", { name: "create" }).click();
+      });
+      test("blog can be liked", async ({ page }) => {
+        await page.getByRole("button", { name: "view" }).click();
+        await expect(page.getByText("likes 0")).toBeVisible();
+        await page.getByRole("button", { name: "like" }).click();
+        await expect(page.getByText("likes 1")).toBeVisible();
+      });
     });
   });
 });
