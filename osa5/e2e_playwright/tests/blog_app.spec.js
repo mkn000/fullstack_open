@@ -3,20 +3,26 @@ const { before } = require("node:test");
 
 describe("Blog app", () => {
   beforeEach(async ({ page, request }) => {
-    await request.post("http://localhost:3003/api/testing/reset");
-    await request.post("http://localhost:3003/api/users", {
+    await request.post("/api/testing/reset");
+    await request.post("/api/users", {
       data: {
         name: "Testi Käyttäjä",
         username: "testuser",
         password: "testpw",
       },
     });
-
-    await page.goto("http://localhost:5173");
+    await request.post("/api/users", {
+      data: {
+        name: "Toinen Käyttäjä",
+        username: "anotheruser",
+        password: "anotherpw",
+      },
+    });
+    await page.goto("/");
   });
 
   test("Login form is shown", async ({ page }) => {
-    await page.goto("http://localhost:5173");
+    await page.goto("/");
     const header = await page.getByText("Log in to application");
     await expect(header).toBeVisible();
     const boxes = await page.getByRole("textbox").all();
@@ -25,7 +31,7 @@ describe("Blog app", () => {
 
   describe("Login", async () => {
     test("succeeds with correct credentials", async ({ page }) => {
-      await page.goto("http://localhost:5173");
+      await page.goto("/");
       const boxes = await page.getByRole("textbox").all();
       await boxes[0].fill("testuser");
       await boxes[1].fill("testpw");
@@ -34,7 +40,7 @@ describe("Blog app", () => {
     });
 
     test("fails with wrong credentials", async ({ page }) => {
-      await page.goto("http://localhost:5173");
+      await page.goto("/");
       const boxes = await page.getByRole("textbox").all();
       await boxes[0].fill("asjdhka");
       await boxes[1].fill("jdlakj");
@@ -45,7 +51,7 @@ describe("Blog app", () => {
 
   describe("When logged in", () => {
     beforeEach(async ({ page }) => {
-      await page.goto("http://localhost:5173");
+      await page.goto("/");
       const boxes = await page.getByRole("textbox").all();
       await boxes[0].fill("testuser");
       await boxes[1].fill("testpw");
@@ -76,11 +82,40 @@ describe("Blog app", () => {
         await boxes[2].fill("test blogurl");
         await page.getByRole("button", { name: "create" }).click();
       });
+
       test("blog can be liked", async ({ page }) => {
         await page.getByRole("button", { name: "view" }).click();
         await expect(page.getByText("likes 0")).toBeVisible();
         await page.getByRole("button", { name: "like" }).click();
         await expect(page.getByText("likes 1")).toBeVisible();
+      });
+
+      test("blog can be removed", async ({ page }) => {
+        page.on("dialog", (dialog) => dialog.accept());
+        await page.getByRole("button", { name: "view" }).click();
+        await page.getByRole("button", { name: "remove" }).click();
+        await expect(page.getByText("blog removed successfully")).toBeVisible();
+      });
+
+      describe("but when logged in as another user", () => {
+        beforeEach(async ({ page }) => {
+          await page.goto("/");
+
+          await page.getByRole("button", { name: "log out" }).click();
+          const boxes = await page.getByRole("textbox").all();
+          await boxes[0].fill("anotheruser");
+          await boxes[1].fill("anotherpw");
+          await page.getByRole("button", { name: "login" }).click();
+        });
+        test("remove button is unavailable", async ({ page }) => {
+          await page.getByRole("button", { name: "view" }).click();
+          await expect(
+            page.getByRole("button", { name: "like" }),
+          ).toBeVisible();
+          await expect(
+            page.getByRole("button", { name: "remove" }),
+          ).not.toBeVisible();
+        });
       });
     });
   });
